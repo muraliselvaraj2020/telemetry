@@ -299,7 +299,7 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
 #ifdef LIBRDKCERTSEL_BUILD
     rdkcertselectorStatus_t curlGetCertStatus;
     char *pCertURI = NULL;
-    char *pEngine = NULL;
+    //char *pEngine = NULL;
 #endif
     char *pCertFile = NULL;
     char *pCertPC = NULL;
