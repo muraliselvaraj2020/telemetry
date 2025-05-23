@@ -185,6 +185,7 @@ static T2ERROR setMtlsHeaders(CURL *curl, const char* certFile, const char* pPas
     }
     CURLcode code = CURLE_OK;
 #ifndef LIBRDKCERTSEL_BUILD
+    #if 0
     code = curl_easy_setopt(curl, CURLOPT_SSLENGINE_DEFAULT, 1L);
     if(code != CURLE_OK)
     {
@@ -192,7 +193,9 @@ static T2ERROR setMtlsHeaders(CURL *curl, const char* certFile, const char* pPas
         childCurlResponse->lineNumber = __LINE__;
         return T2ERROR_FAILURE;
     }
+    #endif
 #endif
+    #if 0
     code = curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "P12");
     if(code != CURLE_OK)
     {
@@ -215,6 +218,7 @@ static T2ERROR setMtlsHeaders(CURL *curl, const char* certFile, const char* pPas
         childCurlResponse->lineNumber = __LINE__;
         return T2ERROR_FAILURE;
     }
+    #endif
     /* disconnect if we cannot authenticate */
     code = curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
     if(code != CURLE_OK)
@@ -419,6 +423,7 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
                 goto child_cleanReturn;
             }
 #ifdef LIBRDKCERTSEL_BUILD
+            #if 0
             pEngine = rdkcertselector_getEngine(curlCertSelector);
             if(pEngine != NULL)
             {
@@ -433,6 +438,7 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
                 curl_easy_cleanup(curl);
                 goto child_cleanReturn;
             }
+            #endif
             do
             {
                 pCertFile = NULL;
@@ -473,6 +479,14 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
                             // This might not be working we need to review this
                             childCurlResponse.curlSetopCode = code;
                         }
+                        T2Info("DBG:pkcs11 tokens for cert and key \n");
+                        #define CERTIFICATE_URI "pkcs11:id=%42;type=cert;pin-value=12345678"
+                        #define PRIVATE_KEY_URI "pkcs11:id=%42;type=private;pin-value=12345678"
+                        curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "ENG");
+                        curl_easy_setopt(curl, CURLOPT_SSLCERT, CERTIFICATE_URI);
+                        curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "ENG");
+                        curl_easy_setopt(curl, CURLOPT_SSLKEY, PRIVATE_KEY_URI);
+                        curl_easy_setopt(curl, CURLOPT_SSLENGINE, "pkcs11");
                         curl_code = curl_easy_perform(curl);
                         curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
                         if(curl_code != CURLE_OK || http_code != 200)
