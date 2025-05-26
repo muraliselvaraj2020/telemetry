@@ -32,6 +32,19 @@
 #include <curl/curl.h>
 #include <signal.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <libp11.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/engine.h>
+#include <openssl/provider.h>
+#include <curl/curl.h>
+#define PKCS11_ENGINE_PATH "/usr/lib/engines-3/pkcs11.so"
+#define PKCS11_MODULE_PATH "/usr/lib/libckteec.so"
+
+
 #include "curlinterface.h"
 #include "reportprofiles.h"
 #include "t2MtlsUtils.h"
@@ -479,9 +492,55 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
                             // This might not be working we need to review this
                             childCurlResponse.curlSetopCode = code;
                         }
-                        T2Info("DBG:pkcs11 tokens for cert and key \n");
-                        #define CERTIFICATE_URI "pkcs11:id=%42;type=cert;pin-value=12345678"
-                        #define PRIVATE_KEY_URI "pkcs11:id=%42;type=private;pin-value=12345678"
+                        T2Info("DBG:#### pkcs11 tokens for cert and key#### \n");
+                        #define CERTIFICATE_URI "pkcs11:id=%40;type=cert;pin-value=12345678"
+                        #define PRIVATE_KEY_URI "pkcs11:id=%40;type=private;pin-value=12345678"
+             
+ENGINE *e = NULL;
+EVP_PKEY *pkey = NULL;
+X509 *cert = NULL;
+ENGINE_load_dynamic();
+    e = ENGINE_by_id("dynamic");
+    if (!e) {
+        fprintf(stderr, "Error loading dynamic engine\n");
+        ERR_print_errors_fp(stderr);
+    }
+    // Set the PKCS#11 engine path
+    if (!ENGINE_ctrl_cmd_string(e, "SO_PATH", PKCS11_ENGINE_PATH, 0) ||
+        !ENGINE_ctrl_cmd_string(e, "ID", "pkcs11", 0) ||
+        !ENGINE_ctrl_cmd_string(e, "LIST_ADD", "1", 0) ||
+        !ENGINE_ctrl_cmd_string(e, "LOAD", NULL, 0)) {
+        fprintf(stderr, "Error setting PKCS#11 engine parameters\n");
+        ERR_print_errors_fp(stderr);
+        ENGINE_free(e);
+    }
+       
+    if (!ENGINE_ctrl_cmd_string(e, "MODULE_PATH", PKCS11_MODULE_PATH, 0)) {
+        fprintf(stderr, "Error setting PKCS#11 module path\n");
+        ERR_print_errors_fp(stderr);
+        ENGINE_free(e);
+    }
+    // Initialize the engine
+    if (!ENGINE_init(e)) {
+        fprintf(stderr, "Error initializing the engine\n");
+        ERR_print_errors_fp(stderr);
+        ENGINE_free(e);
+    }
+    // Load the private key using the URI
+    pkey = ENGINE_load_private_key(e, PRIVATE_KEY_URI, NULL, NULL);
+    if (!pkey) {
+        fprintf(stderr, "Error loading private key\n");
+        ERR_print_errors_fp(stderr);
+        ENGINE_free(e);
+    }
+    cert = ENGINE_load_public_key(e, CERTIFICATE_URI, NULL, NULL);
+    if (!cert) {
+        fprintf(stderr, "Error loading certificate\n");
+        ERR_print_errors_fp(stderr);
+        EVP_PKEY_free(pkey);
+        ENGINE_free(e);
+    }
+                        
                         curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "ENG");
                         curl_easy_setopt(curl, CURLOPT_SSLCERT, CERTIFICATE_URI);
                         curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "ENG");
