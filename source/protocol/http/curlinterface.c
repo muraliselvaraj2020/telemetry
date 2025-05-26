@@ -498,7 +498,6 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
              
 ENGINE *e = NULL;
 EVP_PKEY *pkey = NULL;
-X509 *cert = NULL;
 ENGINE_load_dynamic();
     e = ENGINE_by_id("dynamic");
     if (!e) {
@@ -533,8 +532,8 @@ ENGINE_load_dynamic();
         ERR_print_errors_fp(stderr);
         ENGINE_free(e);
     }
-    cert = ENGINE_load_public_key(e, CERTIFICATE_URI, NULL, NULL);
-    if (!cert) {
+    pkey = ENGINE_load_public_key(e, CERTIFICATE_URI, NULL, NULL);
+    if (!pkey) {
         fprintf(stderr, "Error loading certificate\n");
         ERR_print_errors_fp(stderr);
         EVP_PKEY_free(pkey);
