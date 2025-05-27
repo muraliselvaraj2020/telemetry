@@ -492,10 +492,11 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
                             // This might not be working we need to review this
                             childCurlResponse.curlSetopCode = code;
                         }
-                        T2Info("DBG:#### pkcs11 tokens for cert and key#### \n");
+                        T2Info("DBG:####&&&& pkcs11 tokens for cert and key&&&&#### \n");
                         #define CERTIFICATE_URI "pkcs11:id=%40;type=cert;pin-value=12345678"
                         #define PRIVATE_KEY_URI "pkcs11:id=%40;type=private;pin-value=12345678"
-             
+
+#if 0                        
 ENGINE *e = NULL;
 EVP_PKEY *pkey = NULL;
 ENGINE_load_dynamic();
@@ -539,6 +540,7 @@ ENGINE_load_dynamic();
         EVP_PKEY_free(pkey);
         ENGINE_free(e);
     }
+ #endif                       
                         
                         curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE, "ENG");
                         curl_easy_setopt(curl, CURLOPT_SSLCERT, CERTIFICATE_URI);
