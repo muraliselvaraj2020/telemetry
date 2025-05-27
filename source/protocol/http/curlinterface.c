@@ -41,9 +41,6 @@
 #include <openssl/engine.h>
 #include <openssl/provider.h>
 #include <curl/curl.h>
-#define PKCS11_ENGINE_PATH "/usr/lib/engines-3/pkcs11.so"
-#define PKCS11_MODULE_PATH "/usr/lib/libckteec.so"
-
 
 #include "curlinterface.h"
 #include "reportprofiles.h"
@@ -496,7 +493,9 @@ T2ERROR sendReportOverHTTP(char *httpUrl, char *payload, pid_t* outForkedPid)
                         #define CERTIFICATE_URI "pkcs11:id=%40;type=cert;pin-value=12345678"
                         #define PRIVATE_KEY_URI "pkcs11:id=%40;type=private;pin-value=12345678"
 
-#if 0                        
+#if 0
+#define PKCS11_ENGINE_PATH "/usr/lib/engines-3/pkcs11.so"
+#define PKCS11_MODULE_PATH "/usr/lib/libckteec.so"
 ENGINE *e = NULL;
 EVP_PKEY *pkey = NULL;
 ENGINE_load_dynamic();
